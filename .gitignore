@@ -45,3 +45,14 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+DriftPredictor.cydsn/autoseltemp
+DriftPredictor.cydsn/codegentemp
+DriftPredictor.cydsn/CortexM3
+DriftPredictor.cydsn/DP8051
+DriftPredictor.cydsn/Export
+DriftPredictor.cydsn/Generated_Source
+
+
+
+
+DriftPredictor.cydsn/autoseltemp/MLX90316_SS.h
