@@ -1,0 +1,573 @@
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 1   
+
+
+C51 COMPILER V9.51, COMPILATION OF MODULE MLX90316_SPIM_INT
+OBJECT MODULE PLACED IN .\DP8051\DP8051_Keil_951\Debug\MLX90316_SPIM_INT.obj
+COMPILER INVOKED BY: C:\Program Files (x86)\Cypress\PSoC Creator\3.3\PSoC Creator\import\keil\pk51\9.51\C51\BIN\c51.exe 
+                    -.\Generated_Source\PSoC3\MLX90316_SPIM_INT.c NOIV LARGE MODDP2 OMF2 VB(1) NOIP INCDIR(.,Generated_Source\PSoC3) FF(3) DB
+                    - DF(DEBUG) WL(2) PR(.\DP8051\DP8051_Keil_951\Debug/MLX90316_SPIM_INT.lst) CD OT(2,SIZE) OJ(.\DP8051\DP8051_Keil_951\Debu
+                    -g\MLX90316_SPIM_INT.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * File Name: MLX90316_SPIM_INT.c
+   3          * Version 2.50
+   4          *
+   5          * Description:
+   6          *  This file provides all Interrupt Service Routine (ISR) for the SPI Master
+   7          *  component.
+   8          *
+   9          * Note:
+  10          *  None.
+  11          *
+  12          ********************************************************************************
+  13          * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  14          * You may use this file only in accordance with the license, terms, conditions,
+  15          * disclaimers, and limitations in the end user license agreement accompanying
+  16          * the software package with which this file was provided.
+  17          *******************************************************************************/
+  18          
+  19          #include "MLX90316_SPIM_PVT.h"
+  20          #include "cyapicallbacks.h"
+  21          
+  22          /* User code required at start of ISR */
+  23          /* `#START MLX90316_SPIM_ISR_START_DEF` */
+  24          
+  25          /* `#END` */
+  26          
+  27          
+  28          /*******************************************************************************
+  29          * Function Name: MLX90316_SPIM_TX_ISR
+  30          ********************************************************************************
+  31          *
+  32          * Summary:
+  33          *  Interrupt Service Routine for TX portion of the SPI Master.
+  34          *
+  35          * Parameters:
+  36          *  None.
+  37          *
+  38          * Return:
+  39          *  None.
+  40          *
+  41          * Global variables:
+  42          *  MLX90316_SPIM_txBufferWrite - used for the account of the bytes which
+  43          *  have been written down in the TX software buffer.
+  44          *  MLX90316_SPIM_txBufferRead - used for the account of the bytes which
+  45          *  have been read from the TX software buffer, modified when exist data to
+  46          *  sending and FIFO Not Full.
+  47          *  MLX90316_SPIM_txBuffer[MLX90316_SPIM_TX_BUFFER_SIZE] - used to store
+  48          *  data to sending.
+  49          *  All described above Global variables are used when Software Buffer is used.
+  50          *
+  51          *******************************************************************************/
+  52          CY_ISR(MLX90316_SPIM_TX_ISR)
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 2   
+
+  53          {
+  54   1          #if(MLX90316_SPIM_TX_SOFTWARE_BUF_ENABLED)
+  55   1              uint8 tmpStatus;
+  56   1          #endif /* (MLX90316_SPIM_TX_SOFTWARE_BUF_ENABLED) */
+  57   1      
+  58   1          #ifdef MLX90316_SPIM_TX_ISR_ENTRY_CALLBACK
+                      MLX90316_SPIM_TX_ISR_EntryCallback();
+                  #endif /* MLX90316_SPIM_TX_ISR_ENTRY_CALLBACK */
+  61   1      
+  62   1          /* User code required at start of ISR */
+  63   1          /* `#START MLX90316_SPIM_TX_ISR_START` */
+  64   1      
+  65   1          /* `#END` */
+  66   1          
+  67   1          #if(MLX90316_SPIM_TX_SOFTWARE_BUF_ENABLED)
+  68   1              /* Check if TX data buffer is not empty and there is space in TX FIFO */
+  69   1              while(MLX90316_SPIM_txBufferRead != MLX90316_SPIM_txBufferWrite)
+  70   1              {
+  71   2                  tmpStatus = MLX90316_SPIM_GET_STATUS_TX(MLX90316_SPIM_swStatusTx);
+  72   2                  MLX90316_SPIM_swStatusTx = tmpStatus;
+  73   2      
+  74   2                  if(0u != (MLX90316_SPIM_swStatusTx & MLX90316_SPIM_STS_TX_FIFO_NOT_FULL))
+  75   2                  {
+  76   3                      if(0u == MLX90316_SPIM_txBufferFull)
+  77   3                      {
+  78   4                         MLX90316_SPIM_txBufferRead++;
+  79   4      
+  80   4                          if(MLX90316_SPIM_txBufferRead >= MLX90316_SPIM_TX_BUFFER_SIZE)
+  81   4                          {
+  82   5                              MLX90316_SPIM_txBufferRead = 0u;
+  83   5                          }
+  84   4                      }
+  85   3                      else
+  86   3                      {
+  87   4                          MLX90316_SPIM_txBufferFull = 0u;
+  88   4                      }
+  89   3      
+  90   3                      /* Put data element into the TX FIFO */
+  91   3                      CY_SET_REG8(MLX90316_SPIM_TXDATA_PTR, 
+  92   3                                                   MLX90316_SPIM_txBuffer[MLX90316_SPIM_txBufferRead]);
+  93   3                  }
+  94   2                  else
+  95   2                  {
+  96   3                      break;
+  97   3                  }
+  98   2              }
+  99   1      
+ 100   1              if(MLX90316_SPIM_txBufferRead == MLX90316_SPIM_txBufferWrite)
+ 101   1              {
+ 102   2                  /* TX Buffer is EMPTY: disable interrupt on TX NOT FULL */
+ 103   2                  MLX90316_SPIM_TX_STATUS_MASK_REG &= ((uint8) ~MLX90316_SPIM_STS_TX_FIFO_NOT_FULL);
+ 104   2              }
+ 105   1      
+ 106   1          #endif /* (MLX90316_SPIM_TX_SOFTWARE_BUF_ENABLED) */
+ 107   1      
+ 108   1          /* User code required at end of ISR (Optional) */
+ 109   1          /* `#START MLX90316_SPIM_TX_ISR_END` */
+ 110   1      
+ 111   1          /* `#END` */
+ 112   1          
+ 113   1          #ifdef MLX90316_SPIM_TX_ISR_EXIT_CALLBACK
+                      MLX90316_SPIM_TX_ISR_ExitCallback();
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 3   
+
+                  #endif /* MLX90316_SPIM_TX_ISR_EXIT_CALLBACK */
+ 116   1      }
+ 117          
+ 118          
+ 119          /*******************************************************************************
+ 120          * Function Name: MLX90316_SPIM_RX_ISR
+ 121          ********************************************************************************
+ 122          *
+ 123          * Summary:
+ 124          *  Interrupt Service Routine for RX portion of the SPI Master.
+ 125          *
+ 126          * Parameters:
+ 127          *  None.
+ 128          *
+ 129          * Return:
+ 130          *  None.
+ 131          *
+ 132          * Global variables:
+ 133          *  MLX90316_SPIM_rxBufferWrite - used for the account of the bytes which
+ 134          *  have been written down in the RX software buffer modified when FIFO contains
+ 135          *  new data.
+ 136          *  MLX90316_SPIM_rxBufferRead - used for the account of the bytes which
+ 137          *  have been read from the RX software buffer, modified when overflow occurred.
+ 138          *  MLX90316_SPIM_rxBuffer[MLX90316_SPIM_RX_BUFFER_SIZE] - used to store
+ 139          *  received data, modified when FIFO contains new data.
+ 140          *  All described above Global variables are used when Software Buffer is used.
+ 141          *
+ 142          *******************************************************************************/
+ 143          CY_ISR(MLX90316_SPIM_RX_ISR)
+ 144          {
+ 145   1          #if(MLX90316_SPIM_RX_SOFTWARE_BUF_ENABLED)
+ 146   1              uint8 tmpStatus;
+ 147   1              uint8 rxData;
+ 148   1          #endif /* (MLX90316_SPIM_RX_SOFTWARE_BUF_ENABLED) */
+ 149   1      
+ 150   1          #ifdef MLX90316_SPIM_RX_ISR_ENTRY_CALLBACK
+                      MLX90316_SPIM_RX_ISR_EntryCallback();
+                  #endif /* MLX90316_SPIM_RX_ISR_ENTRY_CALLBACK */
+ 153   1      
+ 154   1          /* User code required at start of ISR */
+ 155   1          /* `#START MLX90316_SPIM_RX_ISR_START` */
+ 156   1      
+ 157   1          /* `#END` */
+ 158   1          
+ 159   1          #if(MLX90316_SPIM_RX_SOFTWARE_BUF_ENABLED)
+ 160   1      
+ 161   1              tmpStatus = MLX90316_SPIM_GET_STATUS_RX(MLX90316_SPIM_swStatusRx);
+ 162   1              MLX90316_SPIM_swStatusRx = tmpStatus;
+ 163   1      
+ 164   1              /* Check if RX data FIFO has some data to be moved into the RX Buffer */
+ 165   1              while(0u != (MLX90316_SPIM_swStatusRx & MLX90316_SPIM_STS_RX_FIFO_NOT_EMPTY))
+ 166   1              {
+ 167   2                  rxData = CY_GET_REG8(MLX90316_SPIM_RXDATA_PTR);
+ 168   2      
+ 169   2                  /* Set next pointer. */
+ 170   2                  MLX90316_SPIM_rxBufferWrite++;
+ 171   2                  if(MLX90316_SPIM_rxBufferWrite >= MLX90316_SPIM_RX_BUFFER_SIZE)
+ 172   2                  {
+ 173   3                      MLX90316_SPIM_rxBufferWrite = 0u;
+ 174   3                  }
+ 175   2      
+ 176   2                  if(MLX90316_SPIM_rxBufferWrite == MLX90316_SPIM_rxBufferRead)
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 4   
+
+ 177   2                  {
+ 178   3                      MLX90316_SPIM_rxBufferRead++;
+ 179   3                      if(MLX90316_SPIM_rxBufferRead >= MLX90316_SPIM_RX_BUFFER_SIZE)
+ 180   3                      {
+ 181   4                          MLX90316_SPIM_rxBufferRead = 0u;
+ 182   4                      }
+ 183   3      
+ 184   3                      MLX90316_SPIM_rxBufferFull = 1u;
+ 185   3                  }
+ 186   2      
+ 187   2                  /* Move data from the FIFO to the Buffer */
+ 188   2                  MLX90316_SPIM_rxBuffer[MLX90316_SPIM_rxBufferWrite] = rxData;
+ 189   2      
+ 190   2                  tmpStatus = MLX90316_SPIM_GET_STATUS_RX(MLX90316_SPIM_swStatusRx);
+ 191   2                  MLX90316_SPIM_swStatusRx = tmpStatus;
+ 192   2              }
+ 193   1      
+ 194   1          #endif /* (MLX90316_SPIM_RX_SOFTWARE_BUF_ENABLED) */
+ 195   1      
+ 196   1          /* User code required at end of ISR (Optional) */
+ 197   1          /* `#START MLX90316_SPIM_RX_ISR_END` */
+ 198   1      
+ 199   1          /* `#END` */
+ 200   1          
+ 201   1          #ifdef MLX90316_SPIM_RX_ISR_EXIT_CALLBACK
+                      MLX90316_SPIM_RX_ISR_ExitCallback();
+                  #endif /* MLX90316_SPIM_RX_ISR_EXIT_CALLBACK */
+ 204   1      }
+ 205          
+ 206          /* [] END OF FILE */
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 5   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION MLX90316_SPIM_TX_ISR (BEGIN)
+0000 C0E0              PUSH    ACC
+0002 C083              PUSH    DPH
+0004 C082              PUSH    DPL
+0006 C085              PUSH    DPH1
+0008 C084              PUSH    DPL1
+000A C086              PUSH    DPS
+000C 758600            MOV     DPS,#00H
+000F C000        E     PUSH    ?C?XPAGE1SFR
+0011 750000      E     MOV     ?C?XPAGE1SFR,#?C?XPAGE1RST
+0014 C0D0              PUSH    PSW
+0016 75D000            MOV     PSW,#00H
+0019 C006              PUSH    AR6
+001B C007              PUSH    AR7
+                                           ; SOURCE LINE # 52
+001D         ?C0001:
+                                           ; SOURCE LINE # 69
+001D 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferWrite
+0020 E0                MOVX    A,@DPTR
+0021 FF                MOV     R7,A
+0022 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferRead
+0025 E0                MOVX    A,@DPTR
+0026 FE                MOV     R6,A
+0027 EE                MOV     A,R6
+0028 6F                XRL     A,R7
+0029 6068              JZ      ?C0002
+                                           ; SOURCE LINE # 70
+                                           ; SOURCE LINE # 71
+002B 900000      E     MOV     DPTR,#MLX90316_SPIM_swStatusTx
+002E E0                MOVX    A,@DPTR
+002F FF                MOV     R7,A
+0030 EF                MOV     A,R7
+0031 5409              ANL     A,#09H
+0033 FF                MOV     R7,A
+0034 906569            MOV     DPTR,#06569H
+0037 E0                MOVX    A,@DPTR
+0038 FE                MOV     R6,A
+0039 EF                MOV     A,R7
+003A 4E                ORL     A,R6
+003B FF                MOV     R7,A
+003C 900000      R     MOV     DPTR,#tmpStatus
+003F EF                MOV     A,R7
+0040 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 72
+0041 900000      R     MOV     DPTR,#tmpStatus
+0044 E0                MOVX    A,@DPTR
+0045 FF                MOV     R7,A
+0046 900000      E     MOV     DPTR,#MLX90316_SPIM_swStatusTx
+0049 EF                MOV     A,R7
+004A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 74
+004B 900000      E     MOV     DPTR,#MLX90316_SPIM_swStatusTx
+004E E0                MOVX    A,@DPTR
+004F FF                MOV     R7,A
+0050 EF                MOV     A,R7
+0051 30E23F            JNB     ACC.2,?C0002
+                                           ; SOURCE LINE # 75
+                                           ; SOURCE LINE # 76
+0054 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferFull
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 6   
+
+0057 E0                MOVX    A,@DPTR
+0058 FF                MOV     R7,A
+0059 EF                MOV     A,R7
+005A 7018              JNZ     ?C0004
+                                           ; SOURCE LINE # 77
+                                           ; SOURCE LINE # 78
+005C 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferRead
+005F E0                MOVX    A,@DPTR
+0060 04                INC     A
+0061 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 80
+0062 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferRead
+0065 E0                MOVX    A,@DPTR
+0066 FF                MOV     R7,A
+0067 EF                MOV     A,R7
+0068 C3                CLR     C
+0069 940A              SUBB    A,#0AH
+006B 400C              JC      ?C0006
+                                           ; SOURCE LINE # 81
+                                           ; SOURCE LINE # 82
+006D 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferRead
+0070 E4                CLR     A
+0071 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 83
+                                           ; SOURCE LINE # 84
+0072 8005              SJMP    ?C0006
+0074         ?C0004:
+                                           ; SOURCE LINE # 86
+                                           ; SOURCE LINE # 87
+0074 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferFull
+0077 E4                CLR     A
+0078 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 88
+0079         ?C0006:
+                                           ; SOURCE LINE # 92
+0079 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferRead
+007C E0                MOVX    A,@DPTR
+007D FF                MOV     R7,A
+007E 7400        E     MOV     A,#LOW MLX90316_SPIM_txBuffer
+0080 2F                ADD     A,R7
+0081 F582              MOV     DPL,A
+0083 E4                CLR     A
+0084 3400        E     ADDC    A,#HIGH MLX90316_SPIM_txBuffer
+0086 F583              MOV     DPH,A
+0088 E0                MOVX    A,@DPTR
+0089 FF                MOV     R7,A
+008A 90654A            MOV     DPTR,#0654AH
+008D EF                MOV     A,R7
+008E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 93
+008F 808C              SJMP    ?C0001
+                                           ; SOURCE LINE # 95
+                                           ; SOURCE LINE # 96
+                                           ; SOURCE LINE # 97
+                                           ; SOURCE LINE # 98
+0091 808A              SJMP    ?C0001
+0093         ?C0002:
+                                           ; SOURCE LINE # 100
+0093 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferWrite
+0096 E0                MOVX    A,@DPTR
+0097 FF                MOV     R7,A
+0098 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferRead
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 7   
+
+009B E0                MOVX    A,@DPTR
+009C FE                MOV     R6,A
+009D EE                MOV     A,R6
+009E B5070B            CJNE    A,AR7,?C0009
+                                           ; SOURCE LINE # 101
+                                           ; SOURCE LINE # 103
+00A1 906589            MOV     DPTR,#06589H
+00A4 E0                MOVX    A,@DPTR
+00A5 FF                MOV     R7,A
+00A6 EF                MOV     A,R7
+00A7 54FB              ANL     A,#0FBH
+00A9 FF                MOV     R7,A
+00AA EF                MOV     A,R7
+00AB F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 104
+                                           ; SOURCE LINE # 116
+00AC         ?C0009:
+00AC D007              POP     AR7
+00AE D006              POP     AR6
+00B0 D0D0              POP     PSW
+00B2 D000        E     POP     ?C?XPAGE1SFR
+00B4 D086              POP     DPS
+00B6 D084              POP     DPL1
+00B8 D085              POP     DPH1
+00BA D082              POP     DPL
+00BC D083              POP     DPH
+00BE D0E0              POP     ACC
+00C0 32                RETI    
+             ; FUNCTION MLX90316_SPIM_TX_ISR (END)
+
+             ; FUNCTION MLX90316_SPIM_RX_ISR (BEGIN)
+0000 C0E0              PUSH    ACC
+0002 C083              PUSH    DPH
+0004 C082              PUSH    DPL
+0006 C085              PUSH    DPH1
+0008 C084              PUSH    DPL1
+000A C086              PUSH    DPS
+000C 758600            MOV     DPS,#00H
+000F C000        E     PUSH    ?C?XPAGE1SFR
+0011 750000      E     MOV     ?C?XPAGE1SFR,#?C?XPAGE1RST
+0014 C0D0              PUSH    PSW
+0016 75D000            MOV     PSW,#00H
+0019 C006              PUSH    AR6
+001B C007              PUSH    AR7
+                                           ; SOURCE LINE # 143
+                                           ; SOURCE LINE # 161
+001D 900000      E     MOV     DPTR,#MLX90316_SPIM_swStatusRx
+0020 E0                MOVX    A,@DPTR
+0021 FF                MOV     R7,A
+0022 EF                MOV     A,R7
+0023 5440              ANL     A,#040H
+0025 FF                MOV     R7,A
+0026 90656B            MOV     DPTR,#0656BH
+0029 E0                MOVX    A,@DPTR
+002A FE                MOV     R6,A
+002B EF                MOV     A,R7
+002C 4E                ORL     A,R6
+002D FF                MOV     R7,A
+002E 900000      R     MOV     DPTR,#tmpStatus
+0031 EF                MOV     A,R7
+0032 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 162
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 8   
+
+0033 900000      R     MOV     DPTR,#tmpStatus
+0036 E0                MOVX    A,@DPTR
+0037 FF                MOV     R7,A
+0038 900000      E     MOV     DPTR,#MLX90316_SPIM_swStatusRx
+003B EF                MOV     A,R7
+003C F0                MOVX    @DPTR,A
+003D         ?C0010:
+                                           ; SOURCE LINE # 165
+003D 900000      E     MOV     DPTR,#MLX90316_SPIM_swStatusRx
+0040 E0                MOVX    A,@DPTR
+0041 FF                MOV     R7,A
+0042 EF                MOV     A,R7
+0043 20E503            JB      ACC.5,$ + 6H
+0046 020000      R     LJMP    ?C0015
+                                           ; SOURCE LINE # 166
+                                           ; SOURCE LINE # 167
+0049 90655A            MOV     DPTR,#0655AH
+004C E0                MOVX    A,@DPTR
+004D FF                MOV     R7,A
+004E 900000      R     MOV     DPTR,#rxData
+0051 EF                MOV     A,R7
+0052 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 170
+0053 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferWrite
+0056 E0                MOVX    A,@DPTR
+0057 04                INC     A
+0058 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 171
+0059 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferWrite
+005C E0                MOVX    A,@DPTR
+005D FF                MOV     R7,A
+005E EF                MOV     A,R7
+005F C3                CLR     C
+0060 940A              SUBB    A,#0AH
+0062 4005              JC      ?C0012
+                                           ; SOURCE LINE # 172
+                                           ; SOURCE LINE # 173
+0064 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferWrite
+0067 E4                CLR     A
+0068 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 174
+0069         ?C0012:
+                                           ; SOURCE LINE # 176
+0069 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferRead
+006C E0                MOVX    A,@DPTR
+006D FF                MOV     R7,A
+006E 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferWrite
+0071 E0                MOVX    A,@DPTR
+0072 FE                MOV     R6,A
+0073 EE                MOV     A,R6
+0074 B5071C            CJNE    A,AR7,?C0013
+                                           ; SOURCE LINE # 177
+                                           ; SOURCE LINE # 178
+0077 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferRead
+007A E0                MOVX    A,@DPTR
+007B 04                INC     A
+007C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 179
+007D 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferRead
+0080 E0                MOVX    A,@DPTR
+0081 FF                MOV     R7,A
+0082 EF                MOV     A,R7
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 9   
+
+0083 C3                CLR     C
+0084 940A              SUBB    A,#0AH
+0086 4005              JC      ?C0014
+                                           ; SOURCE LINE # 180
+                                           ; SOURCE LINE # 181
+0088 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferRead
+008B E4                CLR     A
+008C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 182
+008D         ?C0014:
+                                           ; SOURCE LINE # 184
+008D 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferFull
+0090 7401              MOV     A,#01H
+0092 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 185
+0093         ?C0013:
+                                           ; SOURCE LINE # 188
+0093 900000      R     MOV     DPTR,#rxData
+0096 E0                MOVX    A,@DPTR
+0097 FF                MOV     R7,A
+0098 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferWrite
+009B E0                MOVX    A,@DPTR
+009C FE                MOV     R6,A
+009D 7400        E     MOV     A,#LOW MLX90316_SPIM_rxBuffer
+009F 2E                ADD     A,R6
+00A0 F582              MOV     DPL,A
+00A2 E4                CLR     A
+00A3 3400        E     ADDC    A,#HIGH MLX90316_SPIM_rxBuffer
+00A5 F583              MOV     DPH,A
+00A7 EF                MOV     A,R7
+00A8 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 190
+00A9 900000      E     MOV     DPTR,#MLX90316_SPIM_swStatusRx
+00AC E0                MOVX    A,@DPTR
+00AD FF                MOV     R7,A
+00AE EF                MOV     A,R7
+00AF 5440              ANL     A,#040H
+00B1 FF                MOV     R7,A
+00B2 90656B            MOV     DPTR,#0656BH
+00B5 E0                MOVX    A,@DPTR
+00B6 FE                MOV     R6,A
+00B7 EF                MOV     A,R7
+00B8 4E                ORL     A,R6
+00B9 FF                MOV     R7,A
+00BA 900000      R     MOV     DPTR,#tmpStatus
+00BD EF                MOV     A,R7
+00BE F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 191
+00BF 900000      R     MOV     DPTR,#tmpStatus
+00C2 E0                MOVX    A,@DPTR
+00C3 FF                MOV     R7,A
+00C4 900000      E     MOV     DPTR,#MLX90316_SPIM_swStatusRx
+00C7 EF                MOV     A,R7
+00C8 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 192
+00C9 020000      R     LJMP    ?C0010
+                                           ; SOURCE LINE # 204
+00CC         ?C0015:
+00CC D007              POP     AR7
+00CE D006              POP     AR6
+00D0 D0D0              POP     PSW
+00D2 D000        E     POP     ?C?XPAGE1SFR
+C51 COMPILER V9.51   MLX90316_SPIM_INT                                                     05/05/2016 04:15:49 PAGE 10  
+
+00D4 D086              POP     DPS
+00D6 D084              POP     DPL1
+00D8 D085              POP     DPH1
+00DA D082              POP     DPL
+00DC D083              POP     DPH
+00DE D0E0              POP     ACC
+00E0 32                RETI    
+             ; FUNCTION MLX90316_SPIM_RX_ISR (END)
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    418    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

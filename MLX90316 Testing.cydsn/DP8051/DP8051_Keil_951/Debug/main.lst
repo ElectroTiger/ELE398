@@ -1,0 +1,148 @@
+C51 COMPILER V9.51   MAIN                                                                  05/05/2016 05:09:15 PAGE 1   
+
+
+C51 COMPILER V9.51, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\DP8051\DP8051_Keil_951\Debug\main.obj
+COMPILER INVOKED BY: C:\Program Files (x86)\Cypress\PSoC Creator\3.3\PSoC Creator\import\keil\pk51\9.51\C51\BIN\c51.exe 
+                    -.\main.c NOIV LARGE MODDP2 OMF2 VB(1) NOIP INCDIR(.,Generated_Source\PSoC3) FF(3) DB DF(DEBUG) WL(2) PR(.\DP8051\DP8051_
+                    -Keil_951\Debug/main.lst) CD OT(2,SIZE) OJ(.\DP8051\DP8051_Keil_951\Debug\main.obj)
+
+line level    source
+
+   1          /* ========================================
+   2           *
+   3           * Copyright YOUR COMPANY, THE YEAR
+   4           * All Rights Reserved
+   5           * UNPUBLISHED, LICENSED SOFTWARE.
+   6           *
+   7           * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8           * WHICH IS THE PROPERTY OF your company.
+   9           *
+  10           * ========================================
+  11          */
+  12          #include <project.h>
+  13          #include <stdio.h>
+  14          #include "MLX90316.h"
+  15          
+  16          int main()
+  17          {
+  18   1          CyGlobalIntEnable; /* Enable global interrupts. */
+  19   1          MLX90316_Start(); // Start the SPIM Module
+  20   1          LCD_Stop();
+  21   1          LCD_Init();
+  22   1          LCD_Start();
+  23   1          LCD_ClearDisplay();
+  24   1      
+  25   1          /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+  26   1      
+  27   1          for(;;)
+  28   1          {
+  29   2              char LCDBuffer[17];
+  30   2              double angle = MLX90316_ReadAngle();
+  31   2              int16 angleInt = (int) angle;
+  32   2              //sprintf(LCDBuffer, "Angle: %d\n", angleInt);
+  33   2               LCD_Position(0,0);
+  34   2               LCD_ClearDisplay();
+  35   2               LCD_IsReady();
+  36   2               LCD_PrintNumber(angleInt);
+  37   2              //LCD_PrintString(LCDBuffer);
+  38   2               CyDelay(1000);
+  39   2              
+  40   2              /* Place your application code here. */
+  41   2          }
+  42   1      }
+*** WARNING C280 IN LINE 29 OF .\main.c: 'LCDBuffer': unreferenced local variable
+  43          
+  44          /* [] END OF FILE */
+C51 COMPILER V9.51   MAIN                                                                  05/05/2016 05:09:15 PAGE 2   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION main (BEGIN)
+                                           ; SOURCE LINE # 16
+                                           ; SOURCE LINE # 17
+                                           ; SOURCE LINE # 18
+0000 D2AF              SETB    EA
+0002 9044F4            MOV     DPTR,#044F4H
+0005 74FD              MOV     A,#0FDH
+0007 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 19
+0008 120000      E     LCALL   MLX90316_Start
+                                           ; SOURCE LINE # 20
+000B 120000      E     LCALL   LCD_Stop
+                                           ; SOURCE LINE # 21
+000E 120000      E     LCALL   LCD_Init
+                                           ; SOURCE LINE # 22
+0011 120000      E     LCALL   LCD_Start
+                                           ; SOURCE LINE # 23
+0014 7F01              MOV     R7,#01H
+0016 120000      E     LCALL   _LCD_WriteControl
+                                           ; SOURCE LINE # 27
+0019         ?C0001:
+                                           ; SOURCE LINE # 28
+                                           ; SOURCE LINE # 30
+0019 120000      E     LCALL   MLX90316_ReadAngle
+001C 900000      R     MOV     DPTR,#angle
+001F 120000      E     LCALL   ?C?LSTXDATA
+                                           ; SOURCE LINE # 31
+0022 900000      R     MOV     DPTR,#angle
+0025 120000      E     LCALL   ?C?LLDXDATA
+0028 120000      E     LCALL   ?C?CASTF
+002B 900000      R     MOV     DPTR,#angleInt
+002E EE                MOV     A,R6
+002F F0                MOVX    @DPTR,A
+0030 A3                INC     DPTR
+0031 EF                MOV     A,R7
+0032 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 33
+0033 7D00              MOV     R5,#00H
+0035 7F00              MOV     R7,#00H
+0037 120000      E     LCALL   _LCD_Position
+                                           ; SOURCE LINE # 34
+003A 7F01              MOV     R7,#01H
+003C 120000      E     LCALL   _LCD_WriteControl
+                                           ; SOURCE LINE # 35
+003F 120000      E     LCALL   LCD_IsReady
+                                           ; SOURCE LINE # 36
+0042 900000      R     MOV     DPTR,#angleInt
+0045 E0                MOVX    A,@DPTR
+0046 FE                MOV     R6,A
+0047 A3                INC     DPTR
+0048 E0                MOVX    A,@DPTR
+0049 FF                MOV     R7,A
+004A E4                CLR     A
+004B FC                MOV     R4,A
+004C FD                MOV     R5,A
+004D 120000      E     LCALL   _LCD_PrintU32Number
+                                           ; SOURCE LINE # 38
+0050 7FE8              MOV     R7,#0E8H
+0052 7E03              MOV     R6,#03H
+C51 COMPILER V9.51   MAIN                                                                  05/05/2016 05:09:15 PAGE 3   
+
+0054 7D00              MOV     R5,#00H
+0056 7C00              MOV     R4,#00H
+0058 120000      E     LCALL   _?CyDelay
+                                           ; SOURCE LINE # 41
+005B 80BC              SJMP    ?C0001
+005D 22                RET     
+             ; FUNCTION main (END)
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     94    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      23
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

@@ -12,91 +12,59 @@
 #include <project.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
+#include "MLX90316.h"
 #include "GPS.h"
+#include "USBPrint.h"
 #include "bme280.h"
 #include "bme280api.h"
-#define USB_DEVICE_NUM (0u)
-
-#define USBUART_BUFFER_SIZE (64u)
-#define LINE_STR_LENGTH     (20u)
-
-#define KNOTS2METERS 0.514444
-
-/* Subroutine to handle sending serial data to the USB. */
-static void HandleUSB() {
-    const int iLen = 64;
-    char buffer[iLen];
-    GPS_GetTime(buffer, iLen);
-    USB_PutString(buffer);
-}
-
+#include "anemometer.h"
 
 int main() {
-    struct bme280_t bme280;
     CyGlobalIntEnable; /* Enable global interrupts. */
-    USB_Start(USB_DEVICE_NUM, USB_5V_OPERATION);
+    
 //    GPS_Start();
-    bme280_init(&bme280);
-    bme280api_Start(bme280);
-    
-    const int iLen = 64;
-    char USBBuffer[iLen];
-    
-    uint16 count;
-    uint8 buffer[USBUART_BUFFER_SIZE];
-    uint8 state;
+    /* Start PSoC Firmware. */
+    ILO_Trim_Start();
+    MLX90316_Start(); // Start the magnetic rotary position sensor subsystem.
+    BME280_Start(); // Start the BME280 subsystem.
+    Anemometer_Start(); // Start the Anenometer subsystem. 
+    GPS_Start(); // Start the GPS subsystem. 
 
     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
 
-    for(;;)
-    {
-//        float speed;
-//        float heading;
-//        float humidity;
-//        float temperature;
-//        float pressure;
-//        float altitude;
-//        float wind_speed;
-//        float wind_direction;
-//        
-//        speed = GPS_GetSpeed() * KNOTS2METERS;
-//        heading = GPS_GetHeading();
-            uint32_t iHum;
-            uint32_t iPres;
-            int32_t iTemp;
-            bme280_read_pressure_temperature_humidity(&iPres, &iTemp, &iHum);
-//            humidity = iHum / 1024.;
-//            pressure = iPres / 256.;
-//            temperature = iTemp / 1000;
+    for(;;) {
+        /* Read and print the BME280 values. */
+        double humidity; // Relative humidity in percentage. 
+        double temperature; // The temperature is in C.
+        double pressure; // The pressure is Pascals. 
+        BME280_Read(&temperature, &pressure, &humidity);
+        snprintf(USBPrintBuffer, USBPRINT_BUFFER_SIZE, "Temperature (C): %f", temperature);
+        USBPrint_PrintBuffer();
+        snprintf(USBPrintBuffer, USBPRINT_BUFFER_SIZE, "Pressure (Pa): %f", pressure);
+        USBPrint_PrintBuffer();
+        snprintf(USBPrintBuffer, USBPRINT_BUFFER_SIZE, "Humidity (%%RH): %f", humidity);
+        USBPrint_PrintBuffer();
         
-        /* Initialize the system once the USB line is valid. */
-        if(0u != USB_IsConfigurationChanged()) {
-            if (0u != USB_GetConfiguration()) {
-                USB_CDC_Init();
-            }
+        /* Read and print the wind angle. */
+        double windAngle = MLX90316_ReadAngle();        
+        if (!isnan(windAngle)) {
+            snprintf(USBPrintBuffer, USBPRINT_BUFFER_SIZE, "Wind Angle (Deg): %f", windAngle);
+            USBPrint_PrintBuffer();
+        }
+        else { 
+            MLX90316_GetError(USBPrintBuffer, USBPRINT_BUFFER_SIZE);
+            USBPrint_PrintBuffer();
         }
         
-        /* Service the device once the USB is configured. */
-        if(USB_GetConfiguration() !=0) {
-            count = USB_GetAll(buffer); // Grab the data, but do nothing with it. 
-            while(!USB_CDCIsReady());
-            USB_PutString("Hello, World");
-            snprintf("Humidity: %d\nPressure: %d\n Temperature: %d\n", iLen, USBBuffer, iHum, iPres, iTemp);
-            USB_PutString(USBBuffer);
-            CyDelay(1000);
-            if (count == USBUART_BUFFER_SIZE) {
-                while (!USB_CDCIsReady());
-                USB_PutData(NULL, 0u);
-            }
-        }
+        /* Read and print the wind speed. */
+        double windSpeed = Anemometer_GetSpeed();
+        snprintf(USBPrintBuffer, USBPRINT_BUFFER_SIZE, "Wind Speed (m/s); %f", windSpeed);
+        USBPrint_PrintBuffer();
         
-        state = USB_IsLineChanged();
-        if (state != 0) {
-            
-        }
-        
-        // HandleUSB();
-
+        /* Read and print the GPS data. */
+        GPS_GetCourse(USBPrintBuffer, USBPRINT_BUFFER_SIZE);
+        USBPrint_PrintBuffer();
     }
 }
 

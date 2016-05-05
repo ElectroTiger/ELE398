@@ -563,7 +563,7 @@ s32 *v_uncomp_temperature_s32, s32 *v_uncomp_humidity_s32)
  *
 */
 BME280_RETURN_FUNCTION_TYPE bme280_read_pressure_temperature_humidity(
-uint32_t *v_pressure_u32, int32_t *v_temperature_s32, uint32_t *v_humidity_u32)
+u32 *v_pressure_u32, s32 *v_temperature_s32, u32 *v_humidity_u32)
 {
 	/* used to return the communication result*/
 	BME280_RETURN_FUNCTION_TYPE com_rslt = ERROR;

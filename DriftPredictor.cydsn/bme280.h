@@ -58,7 +58,7 @@
     \brief BME280 Sensor Driver Support Header File */
 #ifndef __BME280_H__
 #define __BME280_H__
-#include "project.h"
+
 
 /*!
 * @brief The following definition uses for define the data types
@@ -238,7 +238,7 @@ define the data types manually
 *	define your data types based on your
 *	machine/compiler/controller configuration
 */
-#define ELSE
+#define  MACHINE_32_BIT
 
 /* If your machine support 16 bit
 define the MACHINE_16_BIT*/
@@ -285,7 +285,7 @@ typedef	unsigned char u8;/**< used for unsigned 8bit */
 typedef	unsigned short int u16;/**< used for unsigned 16bit */
 typedef	unsigned int u32;/**< used for unsigned 32bit */
 typedef	unsigned long long int u64;/**< used for unsigned 64bit */
-#define BME280_64BITSUPPORT_PRESENT
+// #define BME280_64BITSUPPORT_PRESENT
 
 /* If your machine support 64 bit
 define the MACHINE_64_BIT*/
@@ -304,19 +304,8 @@ typedef	unsigned long int u64;/**< used for unsigned 64bit */
 #define BME280_64BITSUPPORT_PRESENT
 
 #else
-    #include "stdint.h"
-/*signed integer types*/
-typedef	int8_t  s8;/**< used for signed 8bit */
-typedef	int16_t s16;/**< used for signed 16bit */
-typedef	int32_t s32;/**< used for signed 32bit */
-typedef	int64_t s64;/**< used for signed 64bit */
-
-/*unsigned integer types*/
-typedef	unsigned char u8;/**< used for unsigned 8bit */
-typedef	unsigned short int u16;/**< used for unsigned 16bit */
-typedef	unsigned int u32;/**< used for unsigned 32bit */
-typedef	unsigned long int u64;/**< used for unsigned 64bit */
-#define BME280_64BITSUPPORT_PRESENT
+#warning The data types defined above which not supported \
+define the data types manually
 #endif
 #endif
 #endif
@@ -328,14 +317,14 @@ typedef	unsigned long int u64;/**< used for unsigned 64bit */
 	the following define. If floating point
 	calculation is not wanted or allowed
 	(e.g. in Linux kernel), please do not set the define. */
-#define BME280_ENABLE_FLOAT
+// #define BME280_ENABLE_FLOAT
 /*!
 * @brief If the user wants to support 64 bit integer calculation
 	(needed for optimal pressure accuracy) please set
 	the following define. If int64 calculation is not wanted
 	(e.g. because it would include
 	large libraries), please do not set the define. */
-#define BME280_ENABLE_INT64
+// #define BME280_ENABLE_INT64 // WEIMEN: I DISABLED IT.
 /***************************************************************/
 /**\name	BUS READ AND WRITE FUNCTION POINTERS        */
 /***************************************************************/
@@ -428,7 +417,7 @@ BME280_BUS_RD_PARAM_TYPE to function calls used inside the API
 
 /* defines the calling parameter types of the BME280_DELAY_FUNCTION
 */
-#define BME280_DELAY_PARAM_TYPES uint32
+#define BME280_DELAY_PARAM_TYPES u16
 /***************************************************************/
 /**\name	GET AND SET BITSLICE FUNCTIONS       */
 /***************************************************************/
@@ -789,7 +778,7 @@ FOR PRESSURE AND TEMPERATURE DATA  */
 		s8 (*bus_read)(u8, u8,\
 		u8 *, u8)
 
-#define BME280_MDELAY_DATA_TYPE uint32
+#define BME280_MDELAY_DATA_TYPE u32
 
 #define	BME280_3MS_DELAY	3
 /**************************************************************/
@@ -1076,7 +1065,7 @@ s32 *v_uncomp_temperature_s32, s32 *v_uncomp_humidity_s32);
  *
 */
 BME280_RETURN_FUNCTION_TYPE bme280_read_pressure_temperature_humidity(
-uint32_t *v_pressure_u32, int32_t *v_temperature_s32, uint32_t *v_humidity_u32);
+u32 *v_pressure_u32, s32 *v_temperature_s32, u32 *v_humidity_u32);
 /**************************************************************/
 /**\name	FUNCTION FOR CALIBRATION */
 /**************************************************************/
@@ -1570,6 +1559,7 @@ s32 *v_uncom_temperature_s32, s32 *v_uncom_humidity_s32);
  *	@param v_addr_u8 -> Address of the register
  *	@param v_data_u8 -> The data from the register
  *	@param v_len_u8 -> no of bytes to read
+ *
  *
  *	@return results of bus communication function
  *	@retval 0 -> Success

@@ -1,0 +1,6 @@
+C:\Users\Weimen Li\Documents\PSoC Creator\ELE398\DriftPredictor.cydsn\DriftPredictor.cyprj|537b89de-39e6-4386-9231-d98a7114d78b
+C:\Program Files (x86)\Cypress\PSoC Creator\3.3\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|7b6f9649-6eeb-49a0-821e-7e1ca0d15059
+C:\Program Files (x86)\Cypress\PSoC Creator\3.3\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|f1ed96b8-6545-477e-8d12-055e58cf0802
+C:\Program Files (x86)\Cypress\PSoC Creator\3.3\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|8ab61f35-e18d-4778-808b-2a97bbe9fe61
+C:\Program Files (x86)\Cypress\PSoC Creator\3.3\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|0fcafb03-187d-4bff-a4a9-bf4c8455b954
+C:\Users\Weimen Li\Documents\PSoC Creator\ELE398\MLX90316 Testing.cydsn\MLX90316 Testing.cyprj|95b47feb-46fa-445b-9756-53d0ae722ad8

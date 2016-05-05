@@ -1,18 +1,13 @@
 /* GPS.h
 Header file to interface with the MTK3339 GPS. 
 */
-#include <string.h>
-#include "system_interface.h"
 #ifndef __GPS_HEADER__
     #define __GPS_HEADER__
+    #include <project.h>
+    #include <string.h>
     
     /* Start the GPS subroutine for the PSoC. */
     void GPS_Start();
-    
-    /* Parse a single character ch from the UART. */
-    void GPS_Parse(char ch);
-    
-    int16_t hello;
     
     /* Return the current hour 24 hour format. */
     uint16_t GPS_GetHour();

@@ -10,6 +10,7 @@
  * ========================================
 */
 
+#include <project.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -46,7 +47,7 @@ CY_ISR(Inter_GPS_Vector) {
     static char8 buf[15];
     static uint8 pos;
     static enum State_T state;
-    char ch;
+    char ch = UART_GPS_GetChar();
     if (ch == '$') state = ID;
     
     switch(state) {
@@ -324,6 +325,11 @@ float GPS_GetSpeed() {
 /* Return the current heading in compass degrees. */
 float GPS_GetHeading() {
     return heading;
+}
+
+/* Get a string containing the current speed and heading. */
+void GPS_GetCourse(char* cpCourseString, uint8_t len) {
+    snprintf(cpCourseString, len, "Speed (knots): %f; Heading (deg): %f\n", speedInKnots, heading);
 }
     
 

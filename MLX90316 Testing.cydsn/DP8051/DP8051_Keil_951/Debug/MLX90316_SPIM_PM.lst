@@ -1,0 +1,276 @@
+C51 COMPILER V9.51   MLX90316_SPIM_PM                                                      05/05/2016 04:15:49 PAGE 1   
+
+
+C51 COMPILER V9.51, COMPILATION OF MODULE MLX90316_SPIM_PM
+OBJECT MODULE PLACED IN .\DP8051\DP8051_Keil_951\Debug\MLX90316_SPIM_PM.obj
+COMPILER INVOKED BY: C:\Program Files (x86)\Cypress\PSoC Creator\3.3\PSoC Creator\import\keil\pk51\9.51\C51\BIN\c51.exe 
+                    -.\Generated_Source\PSoC3\MLX90316_SPIM_PM.c NOIV LARGE MODDP2 OMF2 VB(1) NOIP INCDIR(.,Generated_Source\PSoC3) FF(3) DB 
+                    -DF(DEBUG) WL(2) PR(.\DP8051\DP8051_Keil_951\Debug/MLX90316_SPIM_PM.lst) CD OT(2,SIZE) OJ(.\DP8051\DP8051_Keil_951\Debug\
+                    -MLX90316_SPIM_PM.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * File Name: MLX90316_SPIM_PM.c
+   3          * Version 2.50
+   4          *
+   5          * Description:
+   6          *  This file contains the setup, control and status commands to support
+   7          *  component operations in low power mode.
+   8          *
+   9          * Note:
+  10          *
+  11          ********************************************************************************
+  12          * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  13          * You may use this file only in accordance with the license, terms, conditions,
+  14          * disclaimers, and limitations in the end user license agreement accompanying
+  15          * the software package with which this file was provided.
+  16          *******************************************************************************/
+  17          
+  18          #include "MLX90316_SPIM_PVT.h"
+  19          
+  20          static MLX90316_SPIM_BACKUP_STRUCT MLX90316_SPIM_backup =
+  21          {
+  22              MLX90316_SPIM_DISABLED,
+  23              MLX90316_SPIM_BITCTR_INIT,
+  24          };
+  25          
+  26          
+  27          /*******************************************************************************
+  28          * Function Name: MLX90316_SPIM_SaveConfig
+  29          ********************************************************************************
+  30          *
+  31          * Summary:
+  32          *  Empty function. Included for consistency with other components.
+  33          *
+  34          * Parameters:
+  35          *  None.
+  36          *
+  37          * Return:
+  38          *  None.
+  39          *
+  40          *******************************************************************************/
+  41          void MLX90316_SPIM_SaveConfig(void) 
+  42          {
+  43   1      
+  44   1      }
+  45          
+  46          
+  47          /*******************************************************************************
+  48          * Function Name: MLX90316_SPIM_RestoreConfig
+  49          ********************************************************************************
+  50          *
+  51          * Summary:
+  52          *  Empty function. Included for consistency with other components.
+C51 COMPILER V9.51   MLX90316_SPIM_PM                                                      05/05/2016 04:15:49 PAGE 2   
+
+  53          *
+  54          * Parameters:
+  55          *  None.
+  56          *
+  57          * Return:
+  58          *  None.
+  59          *
+  60          *******************************************************************************/
+  61          void MLX90316_SPIM_RestoreConfig(void) 
+  62          {
+  63   1      
+  64   1      }
+  65          
+  66          
+  67          /*******************************************************************************
+  68          * Function Name: MLX90316_SPIM_Sleep
+  69          ********************************************************************************
+  70          *
+  71          * Summary:
+  72          *  Prepare SPIM Component goes to sleep.
+  73          *
+  74          * Parameters:
+  75          *  None.
+  76          *
+  77          * Return:
+  78          *  None.
+  79          *
+  80          * Global Variables:
+  81          *  MLX90316_SPIM_backup - modified when non-retention registers are saved.
+  82          *
+  83          * Reentrant:
+  84          *  No.
+  85          *
+  86          *******************************************************************************/
+  87          void MLX90316_SPIM_Sleep(void) 
+  88          {
+  89   1          /* Save components enable state */
+  90   1          MLX90316_SPIM_backup.enableState = ((uint8) MLX90316_SPIM_IS_ENABLED);
+  91   1      
+  92   1          MLX90316_SPIM_Stop();
+  93   1      }
+  94          
+  95          
+  96          /*******************************************************************************
+  97          * Function Name: MLX90316_SPIM_Wakeup
+  98          ********************************************************************************
+  99          *
+ 100          * Summary:
+ 101          *  Prepare SPIM Component to wake up.
+ 102          *
+ 103          * Parameters:
+ 104          *  None.
+ 105          *
+ 106          * Return:
+ 107          *  None.
+ 108          *
+ 109          * Global Variables:
+ 110          *  MLX90316_SPIM_backup - used when non-retention registers are restored.
+ 111          *  MLX90316_SPIM_txBufferWrite - modified every function call - resets to
+ 112          *  zero.
+ 113          *  MLX90316_SPIM_txBufferRead - modified every function call - resets to
+ 114          *  zero.
+C51 COMPILER V9.51   MLX90316_SPIM_PM                                                      05/05/2016 04:15:49 PAGE 3   
+
+ 115          *  MLX90316_SPIM_rxBufferWrite - modified every function call - resets to
+ 116          *  zero.
+ 117          *  MLX90316_SPIM_rxBufferRead - modified every function call - resets to
+ 118          *  zero.
+ 119          *
+ 120          * Reentrant:
+ 121          *  No.
+ 122          *
+ 123          *******************************************************************************/
+ 124          void MLX90316_SPIM_Wakeup(void) 
+ 125          {
+ 126   1          #if(MLX90316_SPIM_RX_SOFTWARE_BUF_ENABLED)
+ 127   1              MLX90316_SPIM_rxBufferFull  = 0u;
+ 128   1              MLX90316_SPIM_rxBufferRead  = 0u;
+ 129   1              MLX90316_SPIM_rxBufferWrite = 0u;
+ 130   1          #endif /* (MLX90316_SPIM_RX_SOFTWARE_BUF_ENABLED) */
+ 131   1      
+ 132   1          #if(MLX90316_SPIM_TX_SOFTWARE_BUF_ENABLED)
+ 133   1              MLX90316_SPIM_txBufferFull  = 0u;
+ 134   1              MLX90316_SPIM_txBufferRead  = 0u;
+ 135   1              MLX90316_SPIM_txBufferWrite = 0u;
+ 136   1          #endif /* (MLX90316_SPIM_TX_SOFTWARE_BUF_ENABLED) */
+ 137   1      
+ 138   1          /* Clear any data from the RX and TX FIFO */
+ 139   1          MLX90316_SPIM_ClearFIFO();
+ 140   1      
+ 141   1          /* Restore components block enable state */
+ 142   1          if(0u != MLX90316_SPIM_backup.enableState)
+ 143   1          {
+ 144   2              MLX90316_SPIM_Enable();
+ 145   2          }
+ 146   1      }
+ 147          
+ 148          
+ 149          /* [] END OF FILE */
+C51 COMPILER V9.51   MLX90316_SPIM_PM                                                      05/05/2016 04:15:49 PAGE 4   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION MLX90316_SPIM_SaveConfig (BEGIN)
+                                           ; SOURCE LINE # 41
+                                           ; SOURCE LINE # 42
+                                           ; SOURCE LINE # 44
+0000 22                RET     
+             ; FUNCTION MLX90316_SPIM_SaveConfig (END)
+
+             ; FUNCTION MLX90316_SPIM_RestoreConfig (BEGIN)
+                                           ; SOURCE LINE # 61
+                                           ; SOURCE LINE # 62
+                                           ; SOURCE LINE # 64
+0000 22                RET     
+             ; FUNCTION MLX90316_SPIM_RestoreConfig (END)
+
+             ; FUNCTION MLX90316_SPIM_Sleep (BEGIN)
+                                           ; SOURCE LINE # 87
+                                           ; SOURCE LINE # 88
+                                           ; SOURCE LINE # 90
+0000 906599            MOV     DPTR,#06599H
+0003 E0                MOVX    A,@DPTR
+0004 FF                MOV     R7,A
+0005 EF                MOV     A,R7
+0006 5410              ANL     A,#010H
+0008 FF                MOV     R7,A
+0009 7E00              MOV     R6,#00H
+000B EF                MOV     A,R7
+000C 4E                ORL     A,R6
+000D 6004              JZ      ?C0003
+000F 7F01              MOV     R7,#01H
+0011 8002              SJMP    ?C0004
+0013         ?C0003:
+0013 7F00              MOV     R7,#00H
+0015         ?C0004:
+0015 900000      R     MOV     DPTR,#MLX90316_SPIM_backup
+0018 EF                MOV     A,R7
+0019 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 92
+001A 120000      E     LCALL   MLX90316_SPIM_Stop
+                                           ; SOURCE LINE # 93
+001D 22                RET     
+             ; FUNCTION MLX90316_SPIM_Sleep (END)
+
+             ; FUNCTION MLX90316_SPIM_Wakeup (BEGIN)
+                                           ; SOURCE LINE # 124
+                                           ; SOURCE LINE # 125
+                                           ; SOURCE LINE # 127
+0000 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferFull
+0003 E4                CLR     A
+0004 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 128
+0005 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferRead
+0008 E4                CLR     A
+0009 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 129
+000A 900000      E     MOV     DPTR,#MLX90316_SPIM_rxBufferWrite
+000D E4                CLR     A
+000E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 133
+000F 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferFull
+C51 COMPILER V9.51   MLX90316_SPIM_PM                                                      05/05/2016 04:15:49 PAGE 5   
+
+0012 E4                CLR     A
+0013 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 134
+0014 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferRead
+0017 E4                CLR     A
+0018 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 135
+0019 900000      E     MOV     DPTR,#MLX90316_SPIM_txBufferWrite
+001C E4                CLR     A
+001D F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 139
+001E 120000      E     LCALL   MLX90316_SPIM_ClearFIFO
+                                           ; SOURCE LINE # 142
+0021 900000      R     MOV     DPTR,#MLX90316_SPIM_backup
+0024 E0                MOVX    A,@DPTR
+0025 FF                MOV     R7,A
+0026 EF                MOV     A,R7
+0027 6003              JZ      ?C0007
+                                           ; SOURCE LINE # 143
+                                           ; SOURCE LINE # 144
+0029 120000      E     LCALL   MLX90316_SPIM_Enable
+                                           ; SOURCE LINE # 145
+                                           ; SOURCE LINE # 146
+002C         ?C0007:
+002C 22                RET     
+             ; FUNCTION MLX90316_SPIM_Wakeup (END)
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     77    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

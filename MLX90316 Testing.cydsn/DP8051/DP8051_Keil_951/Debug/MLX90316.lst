@@ -1,0 +1,319 @@
+C51 COMPILER V9.51   MLX90316                                                              05/05/2016 05:04:28 PAGE 1   
+
+
+C51 COMPILER V9.51, COMPILATION OF MODULE MLX90316
+OBJECT MODULE PLACED IN .\DP8051\DP8051_Keil_951\Debug\MLX90316.obj
+COMPILER INVOKED BY: C:\Program Files (x86)\Cypress\PSoC Creator\3.3\PSoC Creator\import\keil\pk51\9.51\C51\BIN\c51.exe 
+                    -.\MLX90316.c NOIV LARGE MODDP2 OMF2 VB(1) NOIP INCDIR(.,Generated_Source\PSoC3) FF(3) DB DF(DEBUG) WL(2) PR(.\DP8051\DP8
+                    -051_Keil_951\Debug/MLX90316.lst) CD OT(2,SIZE) OJ(.\DP8051\DP8051_Keil_951\Debug\MLX90316.obj)
+
+line level    source
+
+   1          /* ========================================
+   2           *
+   3           * Copyright YOUR COMPANY, THE YEAR
+   4           * All Rights Reserved
+   5           * UNPUBLISHED, LICENSED SOFTWARE.
+   6           *
+   7           * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8           * WHICH IS THE PROPERTY OF your company.
+   9           *
+  10           * ========================================
+  11          */
+  12          #include <project.h>
+  13          #include "MLX90316.h"
+  14          
+  15          #define ACTIVE_LOW 0
+  16          #define INACTIVE_HIGH 1
+  17          #define MLX90316_FRAME_SIZE 10
+  18          
+  19          #define MLX90316_ERROR_DETECTION_MASK 0x0003
+  20          #define MLX90316_ERROR_NOERRORVALUE 1
+  21          
+  22          #define MLX90316_ANGLE_MASK 0x3FFF
+  23          #define MLX90316_ANGLE_SHIFT 2
+  24          
+  25          #define MLX90316_ANGLE_RANGE (360. / (1 << 14))
+  26          
+  27          /* Start the MLX 90316 Module. */
+  28          void MLX90316_Start() {
+  29   1          MLX90316_SPIM_Start();
+  30   1          MLX90316_MISO_Comp_Start();
+  31   1          MLX90316_VDAC8_Start();
+  32   1          MLX90316_SS_ControlReg_Write(INACTIVE_HIGH);
+  33   1      }
+  34          
+  35          /* Read the current angle. */
+  36          double MLX90316_ReadAngle() {
+  37   1          double angle;
+  38   1          int i;
+  39   1          const uint8 sendingArray[MLX90316_FRAME_SIZE] = {0xAA,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+  40   1          uint8 receivingArray[MLX90316_FRAME_SIZE] = {0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+  41   1          // const uint8 sendingArray[MLX90316_FRAME_SIZE] = {0,0,0,0,0,0,0,0,0,0};
+  42   1          uint16 receivedData;
+  43   1          /* First, we pull down SS for at least 1.5 us. */
+  44   1          MLX90316_SS_ControlReg_Write(ACTIVE_LOW);
+  45   1          // CyDelay(1);
+  46   1          /* Transfer size is 10 bytes. We initiate a transfer by writing 0xAA, then 9 bytes of 0xFF. */
+  47   1          MLX90316_SPIM_PutArray(sendingArray, MLX90316_FRAME_SIZE);
+  48   1          /* Block while we wait for the transfer to complete. */
+  49   1          // while(!(MLX90316_SPIM_ReadTxStatus() & MLX90316_SPIM_STS_TX_FIFO_EMPTY));
+  50   1          while ((MLX90316_SPIM_GetRxBufferSize() != 9));
+  51   1          /* Parse the received data.  */
+  52   1          for(i = MLX90316_FRAME_SIZE - 1; i >= 0; i--) {
+  53   2              receivingArray[i] = MLX90316_SPIM_ReadByte();
+C51 COMPILER V9.51   MLX90316                                                              05/05/2016 05:04:28 PAGE 2   
+
+  54   2          }
+  55   1          // First two bytes are discarded. 
+  56   1          // MLX90316_SPIM_ReadByte();
+  57   1          // MLX90316_SPIM_ReadByte();
+  58   1          // MLX90316_SPIM_ReadByte();
+  59   1          // Next two bytes represent valid data. 
+  60   1          receivedData = (((uint16) receivingArray[7]) << 8) + ((uint16) receivingArray[6]);
+  61   1          // The rest of the bytes may be discarded.
+  62   1          MLX90316_SPIM_ClearRxBuffer();
+  63   1           
+  64   1          /* We pull the SS back up to terminate the transaction. */
+  65   1          MLX90316_SS_ControlReg_Write(INACTIVE_HIGH);
+  66   1          
+  67   1          /* Now we process the received data. */
+  68   1          if ((receivedData & MLX90316_ERROR_DETECTION_MASK) == MLX90316_ERROR_NOERRORVALUE) {
+  69   2              angle = ((receivedData >> MLX90316_ANGLE_SHIFT) & MLX90316_ANGLE_MASK) * MLX90316_ANGLE_RANGE;
+  70   2          } else {return -1;};
+  71   1          return angle;
+  72   1      }
+  73          
+  74          /* [] END OF FILE */
+C51 COMPILER V9.51   MLX90316                                                              05/05/2016 05:04:28 PAGE 3   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION MLX90316_Start (BEGIN)
+                                           ; SOURCE LINE # 28
+                                           ; SOURCE LINE # 29
+0000 120000      E     LCALL   MLX90316_SPIM_Start
+                                           ; SOURCE LINE # 30
+0003 120000      E     LCALL   MLX90316_MISO_Comp_Start
+                                           ; SOURCE LINE # 31
+0006 120000      E     LCALL   MLX90316_VDAC8_Start
+                                           ; SOURCE LINE # 32
+0009 7F01              MOV     R7,#01H
+000B 120000      E     LCALL   _MLX90316_SS_ControlReg_Write
+                                           ; SOURCE LINE # 33
+000E 22                RET     
+             ; FUNCTION MLX90316_Start (END)
+
+             ; FUNCTION MLX90316_ReadAngle (BEGIN)
+                                           ; SOURCE LINE # 36
+                                           ; SOURCE LINE # 39
+0000 7BFF              MOV     R3,#0FFH
+0002 7A00        R     MOV     R2,#HIGH _?ix1000
+0004 7900        R     MOV     R1,#LOW _?ix1000
+0006 C003              PUSH    AR3
+0008 C002              PUSH    AR2
+000A C001              PUSH    AR1
+000C 7B01              MOV     R3,#01H
+000E 7A00        R     MOV     R2,#HIGH sendingArray
+0010 7900        R     MOV     R1,#LOW sendingArray
+0012 A801              MOV     R0,AR1
+0014 AC02              MOV     R4,AR2
+0016 AD03              MOV     R5,AR3
+0018 D001              POP     AR1
+001A D002              POP     AR2
+001C D003              POP     AR3
+001E 7E00              MOV     R6,#00H
+0020 7F0A              MOV     R7,#0AH
+0022 120000      E     LCALL   ?C?COPYAMD
+                                           ; SOURCE LINE # 40
+0025 7BFF              MOV     R3,#0FFH
+0027 7A00        R     MOV     R2,#HIGH _?ix1001
+0029 7900        R     MOV     R1,#LOW _?ix1001
+002B C003              PUSH    AR3
+002D C002              PUSH    AR2
+002F C001              PUSH    AR1
+0031 7B01              MOV     R3,#01H
+0033 7A00        R     MOV     R2,#HIGH receivingArray
+0035 7900        R     MOV     R1,#LOW receivingArray
+0037 A801              MOV     R0,AR1
+0039 AC02              MOV     R4,AR2
+003B AD03              MOV     R5,AR3
+003D D001              POP     AR1
+003F D002              POP     AR2
+0041 D003              POP     AR3
+0043 7E00              MOV     R6,#00H
+0045 7F0A              MOV     R7,#0AH
+0047 120000      E     LCALL   ?C?COPYAMD
+                                           ; SOURCE LINE # 44
+004A 7F00              MOV     R7,#00H
+004C 120000      E     LCALL   _MLX90316_SS_ControlReg_Write
+                                           ; SOURCE LINE # 47
+C51 COMPILER V9.51   MLX90316                                                              05/05/2016 05:04:28 PAGE 4   
+
+004F 7B01              MOV     R3,#01H
+0051 7A00        R     MOV     R2,#HIGH sendingArray
+0053 7900        R     MOV     R1,#LOW sendingArray
+0055 7D0A              MOV     R5,#0AH
+0057 120000      E     LCALL   _MLX90316_SPIM_PutArray
+005A         ?C0002:
+                                           ; SOURCE LINE # 50
+005A 120000      E     LCALL   MLX90316_SPIM_GetRxBufferSize
+005D EF                MOV     A,R7
+005E B409F9            CJNE    A,#09H,?C0002
+0061         ?C0003:
+                                           ; SOURCE LINE # 52
+0061 900000      R     MOV     DPTR,#i
+0064 E4                CLR     A
+0065 F0                MOVX    @DPTR,A
+0066 A3                INC     DPTR
+0067 7409              MOV     A,#09H
+0069 F0                MOVX    @DPTR,A
+006A         ?C0004:
+006A 900000      R     MOV     DPTR,#i
+006D E0                MOVX    A,@DPTR
+006E FE                MOV     R6,A
+006F A3                INC     DPTR
+0070 E0                MOVX    A,@DPTR
+0071 FF                MOV     R7,A
+0072 C3                CLR     C
+0073 EE                MOV     A,R6
+0074 6480              XRL     A,#080H
+0076 9480              SUBB    A,#080H
+0078 4024              JC      ?C0005
+                                           ; SOURCE LINE # 53
+007A 120000      E     LCALL   MLX90316_SPIM_ReadRxData
+007D 900000      R     MOV     DPTR,#i
+0080 E0                MOVX    A,@DPTR
+0081 FC                MOV     R4,A
+0082 A3                INC     DPTR
+0083 E0                MOVX    A,@DPTR
+0084 FD                MOV     R5,A
+0085 7400        R     MOV     A,#LOW receivingArray
+0087 2D                ADD     A,R5
+0088 F582              MOV     DPL,A
+008A 7400        R     MOV     A,#HIGH receivingArray
+008C 3C                ADDC    A,R4
+008D F583              MOV     DPH,A
+008F EF                MOV     A,R7
+0090 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 54
+0091 900000      R     MOV     DPTR,#i
+0094 74FF              MOV     A,#0FFH
+0096 75F0FF            MOV     B,#0FFH
+0099 120000      E     LCALL   ?C?IILDX
+009C 80CC              SJMP    ?C0004
+009E         ?C0005:
+                                           ; SOURCE LINE # 60
+009E 900000      R     MOV     DPTR,#receivingArray+07H
+00A1 E0                MOVX    A,@DPTR
+00A2 FF                MOV     R7,A
+00A3 7E00              MOV     R6,#00H
+00A5 EF                MOV     A,R7
+00A6 7F00              MOV     R7,#00H
+00A8 FE                MOV     R6,A
+00A9 900000      R     MOV     DPTR,#receivingArray+06H
+C51 COMPILER V9.51   MLX90316                                                              05/05/2016 05:04:28 PAGE 5   
+
+00AC E0                MOVX    A,@DPTR
+00AD FD                MOV     R5,A
+00AE 7C00              MOV     R4,#00H
+00B0 EF                MOV     A,R7
+00B1 2D                ADD     A,R5
+00B2 FF                MOV     R7,A
+00B3 EE                MOV     A,R6
+00B4 3C                ADDC    A,R4
+00B5 FE                MOV     R6,A
+00B6 900000      R     MOV     DPTR,#receivedData
+00B9 EE                MOV     A,R6
+00BA F0                MOVX    @DPTR,A
+00BB A3                INC     DPTR
+00BC EF                MOV     A,R7
+00BD F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 62
+00BE 120000      E     LCALL   MLX90316_SPIM_ClearRxBuffer
+                                           ; SOURCE LINE # 65
+00C1 7F01              MOV     R7,#01H
+00C3 120000      E     LCALL   _MLX90316_SS_ControlReg_Write
+                                           ; SOURCE LINE # 68
+00C6 900000      R     MOV     DPTR,#receivedData
+00C9 E0                MOVX    A,@DPTR
+00CA FE                MOV     R6,A
+00CB A3                INC     DPTR
+00CC E0                MOVX    A,@DPTR
+00CD FF                MOV     R7,A
+00CE 7E00              MOV     R6,#00H
+00D0 EF                MOV     A,R7
+00D1 5403              ANL     A,#03H
+00D3 FF                MOV     R7,A
+00D4 EF                MOV     A,R7
+00D5 6401              XRL     A,#01H
+00D7 4E                ORL     A,R6
+00D8 7030              JNZ     ?C0007
+                                           ; SOURCE LINE # 69
+00DA 900000      R     MOV     DPTR,#receivedData
+00DD E0                MOVX    A,@DPTR
+00DE FE                MOV     R6,A
+00DF A3                INC     DPTR
+00E0 E0                MOVX    A,@DPTR
+00E1 FF                MOV     R7,A
+00E2 EF                MOV     A,R7
+00E3 7802              MOV     R0,#02H
+00E5         ?C0010:
+00E5 CE                XCH     A,R6
+00E6 C3                CLR     C
+00E7 13                RRC     A
+00E8 CE                XCH     A,R6
+00E9 13                RRC     A
+00EA D8F9              DJNZ    R0,?C0010
+00EC FF                MOV     R7,A
+00ED EE                MOV     A,R6
+00EE 543F              ANL     A,#03FH
+00F0 FC                MOV     R4,A
+00F1 AD07              MOV     R5,AR7
+00F3 E4                CLR     A
+00F4 120000      E     LCALL   ?C?FCASTI
+00F7 7B00              MOV     R3,#00H
+00F9 7A00              MOV     R2,#00H
+00FB 79B4              MOV     R1,#0B4H
+00FD 783C              MOV     R0,#03CH
+C51 COMPILER V9.51   MLX90316                                                              05/05/2016 05:04:28 PAGE 6   
+
+00FF 120000      E     LCALL   ?C?FPMUL
+0102 900000      R     MOV     DPTR,#angle
+0105 120000      E     LCALL   ?C?LSTXDATA
+                                           ; SOURCE LINE # 70
+0108 8009              SJMP    ?C0008
+010A         ?C0007:
+010A 7F00              MOV     R7,#00H
+010C 7E00              MOV     R6,#00H
+010E 7D80              MOV     R5,#080H
+0110 7CBF              MOV     R4,#0BFH
+0112 22                RET     
+0113         ?C0008:
+                                           ; SOURCE LINE # 71
+0113 900000      R     MOV     DPTR,#angle
+0116 120000      E     LCALL   ?C?LLDXDATA
+                                           ; SOURCE LINE # 72
+0119         ?C0009:
+0119 22                RET     
+             ; FUNCTION MLX90316_ReadAngle (END)
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    297    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----      28
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
