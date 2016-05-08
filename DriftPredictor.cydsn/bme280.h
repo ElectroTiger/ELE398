@@ -317,14 +317,14 @@ define the data types manually
 	the following define. If floating point
 	calculation is not wanted or allowed
 	(e.g. in Linux kernel), please do not set the define. */
-// #define BME280_ENABLE_FLOAT
+#define BME280_ENABLE_FLOAT
 /*!
 * @brief If the user wants to support 64 bit integer calculation
 	(needed for optimal pressure accuracy) please set
 	the following define. If int64 calculation is not wanted
 	(e.g. because it would include
 	large libraries), please do not set the define. */
-// #define BME280_ENABLE_INT64 // WEIMEN: I DISABLED IT.
+#define BME280_ENABLE_INT64
 /***************************************************************/
 /**\name	BUS READ AND WRITE FUNCTION POINTERS        */
 /***************************************************************/
