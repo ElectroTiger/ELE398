@@ -1,6 +1,10 @@
-/* This file contains the implementations for the bme280api functions. */
+/* Author: Weimen Li
+ * File: bme280api.c
+ * Description: This c file defines the necessary functions required for
+ * our application code to interact with the BME280 library.  */
 #include "bme280api.h"
 #include <stdlib.h>
+#include <math.h>
 
 /* Comments from the following I2C Interface declarations were adapted from bme280support.c */
 
@@ -15,28 +19,11 @@
 
 #define ACTIVE_LOW 0
 #define INACTIVE_HIGH 1
+#define NUMAVERAGES
+#define MA_COEFF 0.08
 
-//s8 BME280_bus_write(u8 dev_addr, u8 reg_addr, u8* reg_data, u8 cnt) {
-////	Allocate space for writing things to the buffer.
-//	uint8_t* writeBuffer = calloc(2 * cnt, sizeof(uint8_t));
-//	/*The first byte transmitted is the register address, with the MSB cleared*/
-//	int i;
-//	for (i = 0; i < 2 * cnt; i += 2) {
-//		writeBuffer[i] = reg_addr;
-//		reg_addr += 1;
-//		writeBuffer[i + 1] = *(reg_data);
-//		reg_data++;
-//	}
-////	Put the data into the transmit buffer.
-//	BME280_SPIM_PutArray(writeBuffer, 2 * cnt);
-////	Clear the received data buffer.
-//	while (BME280_SPIM_GetRxBufferSize() != 2 * cnt)
-//		;
-//	BME280_SPIM_ClearRxBuffer();
-//	free(writeBuffer);
-//
-//	return 0;
-//}
+volatile static double groundPressure;
+volatile static double pressureAvg;
 
 s8 BME280_bus_write(u8 dev_addr, u8 reg_addr, u8* reg_data, u8 cnt) {
     int i = 0;
@@ -115,12 +102,24 @@ void BME280_Read(double* temperature, double* pressure, double* humidity) {
 	*temperature = bme280_compensate_temperature_double(iTemp);
 	*pressure = bme280_compensate_pressure_double(iPres);
 	*humidity = bme280_compensate_humidity_double(iHum);
+   
+    if (isinf(pressureAvg)) {
+        pressureAvg = *pressure;
+    } else {
+    pressureAvg = MA_COEFF * (*pressure) + (1 - MA_COEFF) * pressureAvg;
+    }
+    
+}
+
+CY_ISR(BME280_CaptureP0_Inter_Vec) {
+	groundPressure = pressureAvg;
 }
 
 /* Start all subsystem components relating to the BME280, then initializes the BME280. */
 void BME280_Start() {
 	BME280_SPIM_Start();
 	BME280_MISO_Comp_Start();
+	BME280_CaptureP0_Inter_StartEx(BME280_CaptureP0_Inter_Vec);
 
 	SPI_routine();
 	bme280_init(&bme280);
@@ -130,6 +129,22 @@ void BME280_Start() {
 	bme280_set_oversamp_temperature(BME280_OVERSAMP_1X);
 	bme280_set_oversamp_pressure(BME280_OVERSAMP_1X);
 	bme280_set_standby_durn(BME280_STANDBY_TIME_125_MS);
+}
+
+/* Get the ground-level pressure from the system. */
+double BME280_GetGroundPressure() {
+	return groundPressure;
+}
+
+/* Return the current altitude in meters. */
+double BME280_GetAltitude() {
+/* Formula is found at:
+ * https://learn.sparkfun.com/tutorials/
+ * bmp180-barometric-pressure-sensor-hookup-/
+ * measuring-weather-and-altitude */
+
+	return (44330*(1-pow(pressureAvg/groundPressure, 1/5.255)));
+
 }
 
 /* [] END OF FILE */

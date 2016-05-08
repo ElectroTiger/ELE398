@@ -89,17 +89,6 @@
     	alpha = 0.5 * airDensity * dragCoeff * area / (2 * mass);
     }
 
-    /* Return the current altitude in meters. */
-    double getAltitude(double pressure, double seaPressure) {
-    /* Formula is found at:
-     * https://learn.sparkfun.com/tutorials/
-     * bmp180-barometric-pressure-sensor-hookup-/
-     * measuring-weather-and-altitude */
-
-    	return (44330*(1-pow(pressure/seaPressure, 1/5.255)));
-
-    }
-
     /* Calculate the current drift. */
     void getDrift (double* pFallTime, double* pxPos, double* pyPos) {
     	calculate_drift(x0, w, v0, alpha, pFallTime, pxPos, pyPos);

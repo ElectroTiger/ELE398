@@ -9,38 +9,41 @@
  *
  * ========================================
 */
+#define USB_PRINT
 
 #include <project.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "GPS.h"
+#ifdef USB_PRINT
+	#include "USBPrint.h"
+#endif
 
     /* Time variables */
-    static uint16 hour;
-    static uint16 minute;
-    static float second;
+    volatile static uint16 hour;
+    volatile static uint16 minute;
+    volatile static float second;
     
-    static uint8 dateYear;
-    static uint8 dateMonth;
-    static uint16 dateDay;
+    volatile static uint8 dateYear;
+    volatile static uint8 dateMonth;
+    volatile static uint16 dateDay;
     
     /* Position Variables */
-    static uint16 latDegree;
-    static float latMinute;
-    static _Bool isNorth;
+    volatile static uint16 latDegree;
+    volatile static float latMinute;
+    volatile static _Bool isNorth;
     
-    static uint16 longDegree;
-    static float longMinute;
-    static _Bool isEast;
+    volatile static uint16 longDegree;
+    volatile static float longMinute;
+    volatile static _Bool isEast;
     
     /* Heading Variables*/
-    static float speedInKnots;
-    static float heading;
+    volatile static float speedInKnots;
+    volatile static float heading;
     
     /* Other */
-    static char8 mode;
-    
+    volatile static char8 mode;
 
 CY_ISR(Inter_GPS_Vector) {
     enum State_T {ID, TIME, STATUS, LATITUDE, NS, LONGITUDE, EW, SPEED, COURSE, DATE, MAGNETIC, MAGNETIC_DIR, MODE, CHECKSUM, WAIT};
@@ -48,6 +51,12 @@ CY_ISR(Inter_GPS_Vector) {
     static uint8 pos;
     static enum State_T state;
     char ch = UART_GPS_GetChar();
+    #ifdef USB_PRINT
+    snprintf(USBPrintBuffer, USBPRINT_BUFFER_SIZE, "%c", ch);
+    USBPrint_PrintBuffer();
+    snprintf(USBPrintBuffer, USBPRINT_BUFFER_SIZE, "HELLO!\n");
+    USBPrint_PrintBuffer();
+    #endif
     if (ch == '$') state = ID;
     
     switch(state) {
@@ -246,6 +255,12 @@ CY_ISR(Inter_GPS_Vector) {
 void GPS_Start() {
     UART_GPS_Start();
     Inter_GPS_StartEx(Inter_GPS_Vector);
+    GPS_En_Write(1); // Set the GPS En Line.
+
+#ifdef USB_PRINT
+    USBPrint_Start();
+#endif
+
 }
 
 /* Return the current hour 24 hour format. */
@@ -262,7 +277,7 @@ float GPS_GetSecond() {
 }
 /* Return the current time in HH:MM:SS.SSS format. */
 void GPS_GetTime(char* cpTimeString, uint8 len) {
-    snprintf(cpTimeString, len, "%2d:%2d:%6f",hour, minute, second);
+    snprintf(cpTimeString, len, "Time: %2d:%2d:%6f\n",hour, minute, second);
 }
     
 /* Return the last two digits of the current year */
@@ -279,7 +294,7 @@ uint16 GPS_GetDay() {
 }
 /* Return the current date in DD-MM-YY format. */
 void GPS_GetDate(char* cpDateString, uint8 len) {
-    snprintf(cpDateString, len, "%2d-%2d-%2d", dateDay, dateMonth, dateYear);
+    snprintf(cpDateString, len, "Date: %2d-%2d-%2d\n", dateDay, dateMonth, dateYear);
 }
 
 /* Return the latitude degree. */
@@ -297,7 +312,7 @@ _Bool GPS_GetIsNorth() {
 /* Return latitude string in geocode format "DDD MM.MMM". */
 void GPS_GetLat(char* cpLatString, uint8 len) {
     char8 dirChar = isNorth ? 'N' : 'S';
-    snprintf(cpLatString, len, "%c%2d %6f", dirChar, latDegree, latMinute);
+    snprintf(cpLatString, len, "Latitude: %c%2d %6f\n", dirChar, latDegree, latMinute);
 }
 
 /* Return the longitudinal degree. */
@@ -315,7 +330,7 @@ _Bool GPS_GetIsEast() {
 /* Return longitude string in geocode format "DDD MM.MMM". */
 void GPS_GetLong(char* cpLongString, uint8 len) {
     char8 dirChar = isEast ? 'E' : 'W';
-    snprintf(cpLongString, len, "%c%2d %6f", dirChar, longDegree, longMinute);
+    snprintf(cpLongString, len, "Longitude: %c%2d %6f\n", dirChar, longDegree, longMinute);
 }
 
 /* Return the speed in knots. */

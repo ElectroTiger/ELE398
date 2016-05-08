@@ -27,9 +27,6 @@
      * humidity: Relative humidity*/
     void setAlpha(double pressure, double temperature, double humidity);
 
-    /* Return the current altitude in meters. */
-    double getAltitude(double pressure, double seaPressure);
-
     /* Calculate the current drift. */
     void getDrift (double* fallTime, double* xPos, double* yPos);
 

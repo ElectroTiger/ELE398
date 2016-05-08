@@ -98,8 +98,11 @@ void MLX90316_GetError(char* errorString, int iLen) {
         snprintf(errorString, iLen, "Analog gain above trimmed threshold\n");
     } else if (receivedData & F_RGTOOHIGH) {
         snprintf(errorString, iLen, "Device Supply Greater than 7V\n");
+    } else if (receivedData == 0) {
+    	snprintf(errorString, iLen, "receivedData is zero: "
+    			"Module may be disconnected.\n");
     } else {
-        snprintf(errorString, iLen, "Undefined: %xL", receivedData);
+        snprintf(errorString, iLen, "Undefined: %xL\n", receivedData);
     }
     
     

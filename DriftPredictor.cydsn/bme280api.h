@@ -1,9 +1,14 @@
+/* Author: Weimen Li
+ * File: bme280api.h
+ * Description: This header file declares the necessary functions required for
+ * our application code to interact with the BME280 library.  */
+    
 #ifndef __BME280_API__
     #define __BME280_API__
     #include <bme280.h>
     #include <project.h>
     
-        /* "Global" variable which references are bme280. */
+    /* "Global" variable which references the bme280. */
     struct bme280_t bme280;
     
     /* Comments from the following I2C Interface declarations were adapted from bme280support.c */
@@ -39,6 +44,12 @@
     /* Function I defined for the end user: Reading temp, pressure, and humidity as floats.*/
     void BME280_Read(double* temp, double* pres, double* humidity);
     
+    /* Get the ground-level pressure from the system. */
+    double BME280_GetGroundPressure();
+
+    /* Return the current altitude in meters. */
+    double BME280_GetAltitude();
+
     /* Start all subsystem components relating to the BME280, then initializes the BME280. */
     void BME280_Start();
     #endif
